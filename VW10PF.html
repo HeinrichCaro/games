@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz – Volkswirtschaftliche Produktionsfaktoren</title>
+<style>
+  /* ===== Branding-Farben (aus dem Logo abgeleitet) =====
+     Falls ihr exakte Corporate-Farben habt, trage sie hier ein. */
+  :root{
+    /* Primär: dunkles Marineblau (Schrift im Logo) */
+    --brand-navy: #0C2A4A;     /* ggf. feintunen */
+    /* Akzent 1: Türkis (Puzzle mit +) */
+    --brand-teal: #00A9B4;
+    /* Akzent 2: Magenta/Pink (Puzzle mit §) */
+    --brand-magenta: #9C1D6A;
+    /* Hellblau für Verläufe/Glanz (optional) */
+    --brand-sky: #38BDF8;
+
+    /* UI-Farben, abgeleitet vom Branding */
+    --bg: #0b1220;
+    --card: #0F1A2C;   /* dunkler Navy-Mix */
+    --accent: var(--brand-navy);
+    --accent-2: var(--brand-teal);
+    --accent-3: var(--brand-magenta);
+    --text: #E7EBF2;
+    --muted: #98A6BE;
+    --correct: #16a34a;
+    --wrong: #dc2626;
+    --border: #1d2a45;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background: radial-gradient(1000px 500px at 10% -20%, rgba(0,169,180,.18), transparent),
+                linear-gradient(145deg,#091224,#0b1427);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.35;
+  }
+  .wrap{
+    max-width:480px;
+    margin-inline:auto;
+    padding:16px;
+    min-height:100dvh;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card{
+    width:100%;
+    background:
+      radial-gradient(900px 350px at 90% -20%, rgba(156,29,106,.20), transparent),
+      radial-gradient(900px 350px at 10% -20%, rgba(0,169,180,.16), transparent),
+      var(--card);
+    border:1px solid var(--border);
+    border-radius:20px; padding:18px 14px 14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+
+  /* Header mit Logo */
+  .school{
+    display:flex; align-items:center; gap:10px; padding:6px 6px 12px; border-bottom:1px dashed var(--border);
+  }
+  .school img{
+    width:40px; height:auto; border-radius:6px; background:white;
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+  }
+  .school .name{
+    font-weight:800; letter-spacing:.2px; color:#EAF2FF;
+  }
+  .badge{
+    margin-left:auto;
+    font-size:.78rem; color:white;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    padding:6px 10px; border-radius:999px; font-weight:700;
+  }
+
+  .header{
+    display:flex; align-items:center; gap:10px; margin:10px 4px 0;
+  }
+  .counter{ margin-left:auto; color:var(--muted); font-size:.9rem; }
+
+  .timer-row{ display:flex; align-items:center; gap:10px; margin:10px 2px 12px; }
+  .timer-dot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--brand-magenta); box-shadow:0 0 18px var(--brand-magenta);
+  }
+  .timer{
+    flex:1; height:10px; background:#0a1222; border:1px solid var(--border); border-radius:999px; overflow:hidden;
+  }
+  .timer > .bar{
+    height:100%; width:100%;
+    background:linear-gradient(90deg,var(--brand-teal),var(--brand-navy));
+    transform-origin:left center; transition:transform .2s linear;
+  }
+  .time-left{ font-variant-numeric:tabular-nums; color:var(--muted); font-size:.9rem; width:46px; text-align:right;}
+
+  h1.title{
+    font-size:1.1rem; margin:14px 6px 6px; letter-spacing:.2px;
+  }
+
+  .options{ display:grid; gap:10px; margin:10px 4px 4px; }
+  .option{
+    width:100%; text-align:left; padding:14px; border-radius:14px;
+    background:#0f1b33; border:1px solid var(--border); color:var(--text);
+    font-size:1rem; line-height:1.25; cursor:pointer; transition:all .15s ease;
+    display:flex; gap:10px; align-items:flex-start;
+  }
+  .option:hover{ border-color:#2a3a63; transform:translateY(-1px); }
+  .option[disabled]{ opacity:.75; cursor:not-allowed; transform:none; }
+  .letter{
+    flex:0 0 auto; width:28px; height:28px; border-radius:8px;
+    display:grid; place-items:center; font-weight:800; font-size:.9rem; color:#fff;
+    background:linear-gradient(135deg,var(--brand-navy),var(--brand-teal));
+    border:1px solid #1f2a44;
+  }
+  .text{ flex:1 1 auto; }
+  .option.correct{
+    background:rgba(22,163,74,.15); border-color:rgba(22,163,74,.65); color:#eaffea;
+  }
+  .option.correct .letter{ background:#107d3b; border-color:#16a34a; color:white; }
+  .option.wrong{
+    background:rgba(220,38,38,.12); border-color:rgba(220,38,38,.55);
+  }
+  .option.wrong .letter{ background:#7a1313; border-color:#dc2626; color:#fee2e2; }
+
+  .explain{
+    margin:12px 6px 0; color:#ffe8f3;
+    background:linear-gradient(135deg, rgba(156,29,106,.12), rgba(12,42,74,.12));
+    border:1px solid rgba(156,29,106,.45);
+    padding:10px 12px; border-radius:12px; display:none; font-size:.95rem;
+  }
+  .explain.show{ display:block; }
+
+  .controls{
+    display:flex; justify-content:space-between; gap:10px; margin:16px 4px 0;
+  }
+  .btn{
+    appearance:none; border:none; border-radius:12px; padding:12px 16px; font-weight:800; cursor:pointer;
+    background:linear-gradient(135deg,var(--brand-navy),var(--brand-teal));
+    color:white; box-shadow:0 6px 20px rgba(0,169,180,.25);
+  }
+  .btn.secondary{
+    background:linear-gradient(135deg,var(--brand-magenta),#c23a87);
+    border:1px solid rgba(156,29,106,.55);
+    color:white; box-shadow:0 6px 18px rgba(156,29,106,.25);
+  }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+  /* Result */
+  .result{
+    text-align:center; padding:20px 10px 6px;
+  }
+  .score{
+    font-size:2.2rem; font-weight:900; margin:10px 0 2px;
+    background:linear-gradient(90deg,#fff,#cfe9ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .praise{ font-size:1.2rem; font-weight:800; margin:4px 0 14px; color:#fff; }
+  .muted{ color:var(--muted); }
+
+  /* Mobile: schaltet Hover-Effekt aus */
+  @media (hover:none){
+    .option:hover{ transform:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="app">
+
+    <!-- Logo-Header -->
+    <div class="school">
+      <img src="https://www.bs5-augsburg.de/wp-content/uploads/2024/07/bs5-logo.png" alt="Berufsschule 5 –hule 5</div>
+      <span class="badge">Quiz: Produktionsfaktoren</span>
+    </div>
+
+    <div class="header">
+      <div class="counter" id="counter">Frage 1/8</div>
+    </div>
+
+    <div class="timer-row">
+      <div class="timer-dot"></div>
+      <div class="timer"><div class="bar" id="timeBar" style="transform:scaleX(1)"></div></div>
+      <div class="time-left" id="timeLeft">20s</div>
+    </div>
+
+    <h1 class="title" id="question">Laden…</h1>
+
+    <div class="options" id="options"></div>
+
+    <div class="explain" id="explain"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="restart" style="display:none">Wiederhole das Quiz</button>
+      <button class="btn" id="next" disabled>Weiter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const TOTAL_TIME = 20; // Sekunden pro Frage
+
+  const questions = [
+    {
+      q: "Welche Kombination ordnet originäre und derivative Produktionsfaktoren korrekt zu?",
+      options: [
+        "Arbeit und Boden sind originär; Kapital ist derivativ.",
+        "Arbeit und Kapital sind originär; Boden ist derivativ.",
+        "Nur Kapital ist originär.",
+        "Alle drei Faktoren sind derivativ."
+      ],
+      correct: 0,
+      why: "Arbeit und Boden gelten als ursprüngliche (originäre) Faktoren; Kapital ist abgeleitet (derivativ)."
+    },
+    {
+      q: "Was zählt nach Definition NICHT zum Sach-/Realkapital?",
+      options: [
+        "Hobel-, Fräs- und Bohrmaschinen",
+        "Firmengebäude",
+        "Werkzeuge",
+        "Guthaben bei einem Kreditinstitut"
+      ],
+      correct: 3,
+      why: "Guthaben ist Geldkapital. Sach-/Realkapital sind z. B. Maschinen, Apparaturen und Gebäude."
+    },
+    {
+      q: "Worin besteht die dispositive (leitende) Arbeit?",
+      options: [
+        "Planung, Organisation und Kontrolle des Produktionsablaufs",
+        "Ausführung weisungsgebundener Routinetätigkeiten",
+        "Ausschließlich körperliche Arbeit ohne Planungsanteil",
+        "Nur kreative Tätigkeiten ohne Verantwortung"
+      ],
+      correct: 0,
+      why: "Dispositive Arbeit umfasst Planung, Organisation und Kontrolle, typischerweise durch Leitungsfunktionen."
+    },
+    {
+      q: "Was kennzeichnet den Abbauboden am treffendsten?",
+      options: [
+        "Erzeugung nachwachsender Produkte in Land- und Forstwirtschaft",
+        "Bereitstellung von Flächen als Unternehmensstandort",
+        "Förderung unersetzbarer Stoffe (z. B. Erze, Kohle, Öl)",
+        "Erholungs- und Freizeitnutzung"
+      ],
+      correct: 2,
+      why: "Abbauboden: Förderung nicht nachwachsender Rohstoffe wie Erze, Kohle, Öl."
+    },
+    {
+      q: "Welche Aussage zu Faktormärkten ist korrekt?",
+      options: [
+        "Auf Faktormärkten werden Konsumgüter an Endverbraucher verkauft.",
+        "Arbeits-, Kapital- und Immobilienmärkte sind Faktormärkte.",
+        "Faktormärkte sind ein Teil der Konsumgütermärkte.",
+        "Auf Faktormärkten werden ausschließlich Dienstleistungen gehandelt."
+      ],
+      correct: 1,
+      why: "Faktormärkte handeln Produktionsfaktoren (Arbeit, Kapital, Boden/Immobilien) – nicht die fertigen Sachgüter."
+    },
+    {
+      q: "Im Beispiel „Produktion eines Tisches“ – welche Zuordnung ist korrekt?",
+      options: [
+        "Holz → Arbeit; Hobelmaschine → Boden; Tischler → Kapital",
+        "Holz → Boden; Tischler → Arbeit; Hobel-/Fräs-/Bohrmaschinen → Kapital",
+        "Holz → Kapital; Tischler → Boden; Maschinen → Arbeit",
+        "Holz → Boden; Tischler → Kapital; Maschinen → Arbeit"
+      ],
+      correct: 1,
+      why: "Rohholz ist Boden, die Tätigkeit des Tischlers ist Arbeit, die Maschinen sind Kapital."
+    },
+    {
+      q: "Ein Laptop, den das Bauamt zur Einsatzplanung nutzt, ist bezogen auf die Marktzuordnung…",
+      options: [
+        "ein Gut des Konsumgütermarkts.",
+        "ein Gut des Produktionsgüter-/Investitionsgütermarkts.",
+        "weder Konsum- noch Produktionsgut.",
+        "ausschließlich ein Finanzgut."
+      ],
+      correct: 1,
+      why: "Die Zuordnung richtet sich nach der Verwendung: betrieblicher Einsatz → Produktionsgüter-/Investitionsgütermarkt."
+    },
+    {
+      q: "Warum gilt Kapital als abgeleiteter (derivativer) Produktionsfaktor?",
+      options: [
+        "Weil es unabhängig von Arbeit und Boden entsteht.",
+        "Weil es aus Arbeit und Boden abgeleitet und durch deren Einsatz geschaffen wird.",
+        "Weil es nur Geldkapital meint.",
+        "Weil es nicht produktiv einsetzbar ist."
+      ],
+      correct: 1,
+      why: "Kapital (Maschinen, Gebäude etc.) geht auf den Einsatz von Arbeit und Boden zurück und ist deshalb derivativ."
+    }
+  ];
+
+  // State
+  let idx = 0;
+  let score = 0;
+  let answered = false;
+  let timer = null;
+  let timeLeft = TOTAL_TIME;
+
+  // Elements
+  const elQ = document.getElementById('question');
+  const elOptions = document.getElementById('options');
+  const elExplain = document.getElementById('explain');
+  const elCounter = document.getElementById('counter');
+  const elNext = document.getElementById('next');
+  const elRestart = document.getElementById('restart');
+  const elTimeLeft = document.getElementById('timeLeft');
+  const elTimeBar = document.getElementById('timeBar');
+
+  function start(){
+    idx = 0;
+    score = 0;
+    elNext.style.display = 'inline-block';
+    showQuestion();
+    elRestart.style.display = 'none';
+  }
+
+  function showQuestion(){
+    clearTimer();
+    answered = false;
+    const item = questions[idx];
+    elCounter.textContent = `Frage ${idx+1}/${questions.length}`;
+    elQ.textContent = item.q;
+    elExplain.classList.remove('show');
+    elExplain.textContent = '';
+    elOptions.innerHTML = '';
+    elNext.disabled = true;
+
+    // Render options
+    item.options.forEach((opt, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.setAttribute('data-index', i);
+      btn.innerHTML = `
+        <span class="letter">${String.fromCharCode(65+i)}</span>
+        <span class="text">${opt}</span>
+      `;
+      btn.addEventListener('click', ()=> selectAnswer(i));
+      elOptions.appendChild(btn);
+    });
+
+    // Reset timer
+    timeLeft = TOTAL_TIME;
+    updateTimerUI();
+    timer = setInterval(tick, 1000);
+  }
+
+  function tick(){
+    timeLeft--;
+    if (timeLeft < 0){
+      clearTimer();
+      lockAndReveal(null, true); // timeout: keine Auswahl
+      return;
+    }
+    updateTimerUI();
+  }
+
+  function updateTimerUI(){
+    elTimeLeft.textContent = `${Math.max(0,timeLeft)}s`;
+    const scale = Math.max(0, timeLeft / TOTAL_TIME);
+    elTimeBar.style.transform = `scaleX(${scale})`;
+    // Farbwarnung: Navy→Teal → Magenta/Gelb bei wenig Zeit
+    if (timeLeft <= 5){
+      elTimeBar.style.background = 'linear-gradient(90deg,#f43f5e,#fb923c)';
+    } else if (timeLeft <= 10){
+      elTimeBar.style.background = `linear-gradient(90deg,#f59e0b, var(--brand-magenta))`;
+    } else {
+      elTimeBar.style.background = `linear-gradient(90deg,var(--brand-teal),var(--brand-navy))`;
+    }
+  }
+
+  function clearTimer(){
+    if (timer){ clearInterval(timer); timer = null; }
+  }
+
+  function selectAnswer(i){
+    if (answered) return;
+    lockAndReveal(i, false);
+  }
+
+  function lockAndReveal(selectedIndex, timedOut){
+    answered = true;
+    clearTimer();
+
+    const item = questions[idx];
+    const buttons = [...elOptions.querySelectorAll('.option')];
+    buttons.forEach(b => b.disabled = true);
+
+    // Markierungen: richtige Antwort grün
+    buttons[item.correct].classList.add('correct');
+    if (selectedIndex !== null && selectedIndex !== undefined){
+      if (selectedIndex !== item.correct){
+        buttons[selectedIndex].classList.add('wrong');
+      }
+    }
+
+    // Punktezähler & Erklärung
+    const wasCorrect = selectedIndex === item.correct;
+    if (wasCorrect) {
+      score++;
+      elExplain.textContent = "✔️ Richtig!";
+      elExplain.classList.add('show');
+    } else {
+      const prefix = timedOut ? "⏰ Zeit abgelaufen. " : "❌ Falsch. ";
+      elExplain.textContent = prefix + item.why;
+      elExplain.classList.add('show');
+    }
+
+    elNext.disabled = false;
+  }
+
+  function next(){
+    if (!answered) return;
+    idx++;
+    if (idx >= questions.length){
+      showResult();
+    } else {
+      showQuestion();
+    }
+  }
+
+  function showResult(){
+    clearTimer();
+    const total = questions.length;
+    const praise = getPraise(score, total);
+    const resultHTML = `
+      <div class="result" role="status" aria-live="polite">
+        <div class="praise">${praise}</div>
+        <div class="score">${score} / ${total}</div>
+        <p class="muted">Richtig beantwortet: ${score} von ${total} Fragen.</p>
+      </div>
+    `;
+    elQ.innerHTML = '';
+    elOptions.innerHTML = resultHTML;
+    elExplain.classList.remove('show');
+    elExplain.textContent = '';
+    document.getElementById('counter').textContent = "Quiz beendet";
+    elTimeLeft.textContent = '–';
+    elTimeBar.style.transform = 'scaleX(0)';
+    elNext.disabled = true;
+    elNext.style.display = 'none';
+    elRestart.style.display = 'inline-block';
+  }
+
+  function getPraise(score, total){
+    // Vorgaben:
+    // 7–8: "Klasse! Weiter so!"
+    // 5–6: "Gut gemacht! Dran bleiben!"
+    // 1–4 (und 0): "Das müssen Sie nochmals Lernen!"
+    if (score >= 7) return "Klasse";
+    if (score >= 5) return "Gut gemacht! Dran bleiben!";
+    return "Das müssen Sie nochmals lernen!";
+  }
+
+  // Events
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('restart').addEventListener('click', start);
+
+  // Start
+  start();
+})();
+</script>
+</body>
+</html>
