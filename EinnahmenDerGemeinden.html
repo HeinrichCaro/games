@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz: Kommunale Finanzen</title>
+    <style>
+        :root {
+            --primary-color: #0056b3; /* Seriöses Blau */
+            --accent-color: #ffc107; /* Gelb für Highlights */
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header & Progress */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { margin: 0; font-size: 1.5rem; }
+        .subtitle { font-size: 0.9rem; opacity: 0.8; margin-top: 5px; }
+
+        .progress-container {
+            background-color: #e9ecef;
+            height: 8px;
+            width: 100%;
+        }
+        .progress-bar {
+            background-color: var(--accent-color);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 30px;
+            flex-grow: 1;
+        }
+
+        .question-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+
+        /* Buttons & Interactions */
+        .btn-option {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            background-color: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-color);
+        }
+
+        .btn-option:hover:not([disabled]) {
+            background-color: #f8f9fa;
+            border-color: var(--primary-color);
+        }
+
+        .btn-option.correct {
+            background-color: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .btn-option.wrong {
+            background-color: #f8d7da;
+            border-color: var(--error-color);
+            color: #721c24;
+        }
+
+        /* Matching Styles */
+        .match-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .match-row label { flex: 1; margin-right: 10px; font-weight: 500; }
+        .match-row select { 
+            flex: 1; 
+            padding: 8px; 
+            border-radius: 4px; 
+            border: 1px solid #ced4da;
+            max-width: 50%;
+        }
+
+        /* Open Question Styles */
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            font-family: inherit;
+            resize: vertical;
+            box-sizing: border-box; /* Fixes width issues */
+        }
+
+        /* Feedback Section */
+        .feedback-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none; /* Hidden by default */
+        }
+        .feedback-box.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .feedback-box.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .feedback-box.info { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+
+        /* Navigation Buttons */
+        .nav-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            float: right;
+            display: none; /* Hidden until needed */
+        }
+        .nav-btn:hover { background-color: #004494; }
+
+        .check-btn {
+            background-color: var(--text-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            display: inline-block;
+        }
+
+        /* Result Screen */
+        .result-container {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+        }
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        /* Responsive Tweaks */
+        @media (max-width: 600px) {
+            .match-row { flex-direction: column; align-items: flex-start; }
+            .match-row select { max-width: 100%; width: 100%; margin-top: 5px; }
+            .content { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Kommunale Finanzen</h1>
+        <div class="subtitle">Übungsaufgaben für Verwaltungsfachangestellte</div>
+    </header>
+    
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Quiz Area -->
+    <div class="content" id="quizArea">
+        <!-- Questions render here -->
+    </div>
+
+    <!-- Result Area -->
+    <div class="result-container" id="resultArea">
+        <h2>Auswertung</h2>
+        <div class="score-display" id="finalScore">0 / 0</div>
+        <p id="finalMessage">Ladet...</p>
+        <button class="nav-btn" style="display:inline-block; float:none;" onclick="location.reload()">Quiz wiederholen</button>
+    </div>
+</div>
+
+<script>
+    // --- DATEN ---
+    const quizData = [
+        {
+            type: 'mc',
+            question: "1. Welche der folgenden Einnahmequellen gehört NICHT zu den „vier Säulen“ der gemeindlichen Finanzierung gemäß Art. 106 GG?",
+            answers: [
+                "Beteiligung an der Einkommen- und Umsatzsteuer",
+                "Realsteuergarantie",
+                "Zuweisungen aus dem Europäischer Sozialfonds",
+                "Finanzausgleich (Zuweisungen des Landes)"
+            ],
+            correct: 2, // Index 2 = C
+            info: "Korrekt! Der Europäische Sozialfonds ist ein EU-Instrument und keine der 4 verfassungsrechtlichen Säulen."
+        },
+        {
+            type: 'mc',
+            question: "2. Was ist das wesentliche Unterscheidungsmerkmal von Steuern gegenüber Gebühren und Beiträgen?",
+            answers: [
+                "Steuern werden nur von Unternehmen gezahlt.",
+                "Steuern sind Geldleistungen ohne Anspruch auf eine konkrete Gegenleistung.",
+                "Steuern sind immer zweckgebunden für Investitionen.",
+                "Steuern werden auf freiwilliger Basis entrichtet."
+            ],
+            correct: 1,
+            info: "Genau. Das Non-Affektationsprinzip: Steuern fließen in den allgemeinen Haushalt ohne direkte Gegenleistung."
+        },
+        {
+            type: 'mc',
+            question: "3. Welche Aussage zur Kreditaufnahme durch Gemeinden ist gemäß der Rangfolge der Einnahmen (Art. 62 GO) korrekt?",
+            answers: [
+                "Kredite sind die primäre Einnahmequelle.",
+                "Kredite dürfen zur Deckung aller laufenden Ausgaben (z. B. Gehälter) aufgenommen werden.",
+                "Kredite stehen an letzter Stelle und dürfen nur für Investitionen aufgenommen werden.",
+                "Kredite sind den Steuern rechtlich gleichgestellt."
+            ],
+            correct: 2,
+            info: "Richtig. Kredite sind subsidiär (nachrangig) und zweckgebunden für Investitionen."
+        },
+        {
+            type: 'mc',
+            question: "4. Worauf wird die Grundsteuer erhoben?",
+            answers: [
+                "Auf das Einkommen des Eigentümers.",
+                "Auf den Gewinn von Gewerbebetrieben.",
+                "Auf den Wert des Grundbesitzes (unabhängig von Leistungsfähigkeit).",
+                "Auf die Anzahl der Personen im Haushalt."
+            ],
+            correct: 2,
+            info: "Richtig. Die Grundsteuer ist eine Objektsteuer."
+        },
+        {
+            type: 'bool',
+            question: "5. Beiträge werden erhoben, wenn jemand eine öffentliche Einrichtung tatsächlich benutzt (z. B. Müllabfuhr).",
+            correct: false, // Falsch
+            info: "Falsch. Das beschreibt Gebühren. Beiträge zahlt man für die bloße MÖGLICHKEIT der Nutzung."
+        },
+        {
+            type: 'bool',
+            question: "6. Die Hundesteuer zählt zu den örtlichen Aufwandsteuern und darf nur mit Satzung erhoben werden.",
+            correct: true, // Wahr
+            info: "Richtig."
+        },
+        {
+            type: 'match',
+            question: "7. Ordnen Sie die Einnahmearten korrekt zu:",
+            pairs: [
+                { term: "Gewerbesteuer", match: "Realsteuer" },
+                { term: "Eintrittsgeld Schwimmbad", match: "Gebühr" },
+                { term: "Straßenerschließung", match: "Beitrag" },
+                { term: "Zweitwohnungssteuer", match: "Örtliche Aufwandsteuer" }
+            ],
+            options: ["Realsteuer", "Gebühr", "Beitrag", "Örtliche Aufwandsteuer"],
+            info: "Gut gemacht! Diese Unterscheidung ist essenziell."
+        },
+        {
+            type: 'match',
+            question: "8. Ordnen Sie die Definitionen den Fachbegriffen zu:",
+            pairs: [
+                { term: "Zahlung für MÖGLICHKEIT der Nutzung", match: "Beitrag" },
+                { term: "Zahlung für TATSÄCHLICHE Nutzung", match: "Gebühr" },
+                { term: "Zahlung OHNE Gegenleistung", match: "Steuer" }
+            ],
+            options: ["Steuer", "Beitrag", "Gebühr"],
+            info: "Exakt."
+        },
+        {
+            type: 'open',
+            question: "9. Erläutern Sie den Unterschied zwischen „Erschließungsbeitrag“ und „Herstellungsbeitrag“.",
+            solution: "Erschließungsbeitrag = Erstmalige Herstellung von Straßen/Wegen (Verkehrsanbindung).\nHerstellungsbeitrag = Leitungsgebundene Anlagen (z.B. Wasser/Abwasser).",
+            info: "Vergleichen Sie Ihre Antwort mit der Lösung."
+        }
+    ];
+
+    // --- LOGIK ---
+    let currentStep = 0;
+    let score = 0;
+    const quizArea = document.getElementById('quizArea');
+    const resultArea = document.getElementById('resultArea');
+    const progressBar = document.getElementById('progressBar');
+
+    function initQuiz() {
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        // Update Progress
+        const percent = (currentStep / quizData.length) * 100;
+        progressBar.style.width = percent + "%";
+
+        const q = quizData[currentStep];
+        quizArea.innerHTML = ''; // Clear previous
+
+        // Title
+        const title = document.createElement('div');
+        title.className = 'question-title';
+        title.innerText = q.question;
+        quizArea.appendChild(title);
+
+        // Render Answer Area based on type
+        if (q.type === 'mc') {
+            renderMC(q);
+        } else if (q.type === 'bool') {
+            renderBool(q);
+        } else if (q.type === 'match') {
+            renderMatch(q);
+        } else if (q.type === 'open') {
+            renderOpen(q);
+        }
+    }
+
+    // --- RENDER FUNKTIONEN ---
+
+    function renderMC(q) {
+        q.answers.forEach((ans, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-option';
+            btn.innerText = ans;
+            btn.onclick = () => solveMC(btn, idx, q);
+            quizArea.appendChild(btn);
+        });
+        createFeedbackBox();
+        createNextBtn();
+    }
+
+    function renderBool(q) {
+        const btnTrue = document.createElement('button');
+        btnTrue.className = 'btn-option';
+        btnTrue.innerText = "Wahr / Richtig";
+        btnTrue.onclick = () => solveBool(btnTrue, true, q);
+        
+        const btnFalse = document.createElement('button');
+        btnFalse.className = 'btn-option';
+        btnFalse.innerText = "Falsch";
+        btnFalse.onclick = () => solveBool(btnFalse, false, q);
+
+        quizArea.appendChild(btnTrue);
+        quizArea.appendChild(btnFalse);
+        createFeedbackBox();
+        createNextBtn();
+    }
+
+    function renderMatch(q) {
+        q.pairs.forEach((pair, idx) => {
+            const row = document.createElement('div');
+            row.className = 'match-row';
+            
+            // Randomize options for display? No, keep standard list for dropdown
+            let optionsHtml = '<option value="" selected disabled>Bitte wählen...</option>';
+            q.options.forEach(opt => {
+                optionsHtml += `<option value="${opt}">${opt}</option>`;
+            });
+
+            row.innerHTML = `
+                <label>${pair.term}</label>
+                <select id="match_select_${idx}">${optionsHtml}</select>
+            `;
+            quizArea.appendChild(row);
+        });
+
+        const checkBtn = document.createElement('button');
+        checkBtn.className = 'check-btn';
+        checkBtn.innerText = "Überprüfen";
+        checkBtn.onclick = () => solveMatch(q, checkBtn);
+        quizArea.appendChild(checkBtn);
+
+        createFeedbackBox();
+        createNextBtn();
+    }
+
+    function renderOpen(q) {
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = "Geben Sie hier Ihre Antwort ein...";
+        quizArea.appendChild(textarea);
+
+        const checkBtn = document.createElement('button');
+        checkBtn.className = 'check-btn';
+        checkBtn.innerText = "Lösung anzeigen";
+        checkBtn.onclick = () => solveOpen(q, textarea.value, checkBtn);
+        quizArea.appendChild(checkBtn);
+
+        createFeedbackBox();
+        createNextBtn();
+    }
+
+    // --- LÖSUNGS LOGIK ---
+
+    function createFeedbackBox() {
+        const box = document.createElement('div');
+        box.id = 'feedbackBox';
+        box.className = 'feedback-box';
+        quizArea.appendChild(box);
+    }
+
+    function createNextBtn() {
+        const btn = document.createElement('button');
+        btn.id = 'nextBtn';
+        btn.className = 'nav-btn';
+        btn.innerText = "Nächste Frage";
+        btn.onclick = nextStep;
+        quizArea.appendChild(btn);
+    }
+
+    function disableAllButtons() {
+        const btns = document.querySelectorAll('.btn-option');
+        btns.forEach(b => b.disabled = true);
+    }
+
+    function showFeedback(isCorrect, text) {
+        const box = document.getElementById('feedbackBox');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        box.style.display = 'block';
+        box.className = isCorrect ? 'feedback-box success' : 'feedback-box error';
+        box.innerHTML = (isCorrect ? '<strong>Richtig!</strong> ' : '<strong>Falsch.</strong> ') + text;
+        
+        nextBtn.style.display = 'inline-block';
+    }
+
+    function solveMC(btn, idx, q) {
+        disableAllButtons();
+        const isCorrect = (idx === q.correct);
+        if (isCorrect) {
+            btn.classList.add('correct');
+            score++;
+        } else {
+            btn.classList.add('wrong');
+            // Highlight correct one (optional, simpler not to for clear UI flow)
+        }
+        showFeedback(isCorrect, q.info);
+    }
+
+    function solveBool(btn, val, q) {
+        disableAllButtons();
+        const isCorrect = (val === q.correct);
+        if(isCorrect) {
+            btn.classList.add('correct');
+            score++;
+        } else {
+            btn.classList.add('wrong');
+        }
+        showFeedback(isCorrect, q.info);
+    }
+
+    function solveMatch(q, btn) {
+        let allCorrect = true;
+        
+        q.pairs.forEach((pair, idx) => {
+            const select = document.getElementById(`match_select_${idx}`);
+            const userVal = select.value;
+            
+            if (userVal === pair.match) {
+                select.style.borderColor = 'green';
+                select.style.backgroundColor = '#d4edda';
+            } else {
+                select.style.borderColor = 'red';
+                select.style.backgroundColor = '#f8d7da';
+                allCorrect = false;
+            }
+            select.disabled = true;
+        });
+
+        btn.style.display = 'none'; // Hide check button
+        
+        if (allCorrect) score++;
+        
+        const box = document.getElementById('feedbackBox');
+        const nextBtn = document.getElementById('nextBtn');
+        box.style.display = 'block';
+        
+        if(allCorrect) {
+            box.className = 'feedback-box success';
+            box.innerHTML = "<strong>Perfekt!</strong> Alle Zuordnungen stimmen.";
+        } else {
+            box.className = 'feedback-box error';
+            box.innerHTML = "<strong>Nicht ganz.</strong> Überprüfen Sie die rot markierten Felder. <br>Lösungshinweis: " + q.info;
+        }
+        
+        nextBtn.style.display = 'inline-block';
+    }
+
+    function solveOpen(q, userText, btn) {
+        btn.style.display = 'none';
+        
+        const box = document.getElementById('feedbackBox');
+        box.style.display = 'block';
+        box.className = 'feedback-box info';
+        
+        box.innerHTML = `
+            <div><strong>Ihre Antwort:</strong><br><em>${userText || "Keine Eingabe"}</em></div>
+            <hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">
+            <div><strong>Musterlösung:</strong><br>${q.solution.replace(/\n/g, '<br>')}</div>
+            <div style="margin-top:15px;">
+                <strong>Bewerten Sie sich selbst:</strong><br>
+                <button class="check-btn" style="background-color:#28a745; margin-right:5px;" onclick="rateOpen(1)">Korrekt / Sinngemäß (1 Pkt)</button>
+                <button class="check-btn" style="background-color:#dc3545;" onclick="rateOpen(0)">Falsch (0 Pkt)</button>
+            </div>
+        `;
+    }
+
+    function rateOpen(points) {
+        score += points;
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        // Buttons in feedback box disable
+        const btns = document.querySelectorAll('.feedback-box button');
+        btns.forEach(b => b.disabled = true);
+    }
+
+    function nextStep() {
+        currentStep++;
+        if (currentStep < quizData.length) {
+            renderQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function showResult() {
+        quizArea.style.display = 'none';
+        progressBar.parentElement.style.display = 'none';
+        resultArea.style.display = 'block';
+
+        const finalScoreEl = document.getElementById('finalScore');
+        const finalMsg = document.getElementById('finalMessage');
+
+        finalScoreEl.innerText = `${score} / ${quizData.length}`;
+        
+        const percentage = (score / quizData.length) * 100;
+        
+        if (percentage === 100) {
+            finalMsg.innerText = "Hervorragend! Sie sind ein Finanz-Experte.";
+        } else if (percentage >= 80) {
+            finalMsg.innerText = "Sehr gut! Sie haben das Thema verstanden.";
+        } else if (percentage >= 50) {
+            finalMsg.innerText = "Gut, aber schauen Sie sich die Details nochmal an.";
+        } else {
+            finalMsg.innerText = "Bitte wiederholen Sie das Kapitel Einnahmequellen.";
+        }
+    }
+
+    // Start
+    initQuiz();
+
+</script>
+
+</body>
+</html>
