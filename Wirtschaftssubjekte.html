@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz – Wirtschaftssubjekte (Berufsschule 5)</title>
+<style>
+  /* ===== Branding-Farben Berufsschule 5 ===== */
+  :root{
+    --brand-navy: #0C2A4A;   /* dunkles Marineblau (Logo-Schrift) */
+    --brand-teal: #00A9B4;   /* Türkis (Puzzle +) */
+    --brand-magenta: #9C1D6A;/* Magenta (Puzzle §) */
+    --brand-sky: #38BDF8;
+
+    --bg: #0b1220;
+    --card: #0F1A2C;
+    --accent: var(--brand-navy);
+    --accent-2: var(--brand-teal);
+    --accent-3: var(--brand-magenta);
+    --text: #E7EBF2;
+    --muted: #98A6BE;
+    --correct: #16a34a;
+    --wrong: #dc2626;
+    --border: #1d2a45;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background: radial-gradient(1000px 500px at 10% -20%, rgba(0,169,180,.18), transparent),
+                linear-gradient(145deg,#091224,#0b1427);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.35;
+  }
+  .wrap{
+    max-width:480px; margin-inline:auto; padding:16px;
+    min-height:100dvh; display:flex; align-items:center; justify-content:center;
+  }
+  .card{
+    width:100%;
+    background:
+      radial-gradient(900px 350px at 90% -20%, rgba(156,29,106,.20), transparent),
+      radial-gradient(900px 350px at 10% -20%, rgba(0,169,180,.16), transparent),
+      var(--card);
+    border:1px solid var(--border);
+    border-radius:20px; padding:18px 14px 14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+
+  /* Header mit Logo */
+  .school{
+    display:flex; align-items:center; gap:10px; padding:6px 6px 12px; border-bottom:1px dashed var(--border);
+  }
+  .school img{
+    width:40px; height:auto; border-radius:6px; background:white;
+    box-shadow:0 2px 8px rgba(0,0,0,.25);
+  }
+  .school .name{
+    font-weight:800; letter-spacing:.2px; color:#EAF2FF;
+  }
+  .badge{
+    margin-left:auto;
+    font-size:.78rem; color:white;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    padding:6px 10px; border-radius:999px; font-weight:700;
+  }
+
+  .header{ display:flex; align-items:center; gap:10px; margin:10px 4px 0; }
+  .counter{ margin-left:auto; color:var(--muted); font-size:.9rem; }
+
+  .timer-row{ display:flex; align-items:center; gap:10px; margin:10px 2px 12px; }
+  .timer-dot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--brand-magenta); box-shadow:0 0 18px var(--brand-magenta);
+  }
+  .timer{
+    flex:1; height:10px; background:#0a1222; border:1px solid var(--border); border-radius:999px; overflow:hidden;
+  }
+  .timer > .bar{
+    height:100%; width:100%;
+    background:linear-gradient(90deg,var(--brand-teal),var(--brand-navy));
+    transform-origin:left center; transition:transform .2s linear;
+  }
+  .time-left{ font-variant-numeric:tabular-nums; color:var(--muted); font-size:.9rem; width:46px; text-align:right;}
+
+  h1.title{ font-size:1.1rem; margin:14px 6px 6px; letter-spacing:.2px; }
+
+  .options{ display:grid; gap:10px; margin:10px 4px 4px; }
+  .option{
+    width:100%; text-align:left; padding:14px; border-radius:14px;
+    background:#0f1b33; border:1px solid var(--border); color:var(--text);
+    font-size:1rem; line-height:1.25; cursor:pointer; transition:all .15s ease;
+    display:flex; gap:10px; align-items:flex-start;
+  }
+  .option:hover{ border-color:#2a3a63; transform:translateY(-1px); }
+  .option[disabled]{ opacity:.75; cursor:not-allowed; transform:none; }
+  .letter{
+    flex:0 0 auto; width:28px; height:28px; border-radius:8px;
+    display:grid; place-items:center; font-weight:800; font-size:.9rem; color:#fff;
+    background:linear-gradient(135deg,var(--brand-navy),var(--brand-teal));
+    border:1px solid #1f2a44;
+  }
+  .text{ flex:1 1 auto; }
+  .option.correct{
+    background:rgba(22,163,74,.15); border-color:rgba(22,163,74,.65); color:#eaffea;
+  }
+  .option.correct .letter{ background:#107d3b; border-color:#16a34a; color:white; }
+  .option.wrong{
+    background:rgba(220,38,38,.12); border-color:rgba(220,38,38,.55);
+  }
+  .option.wrong .letter{ background:#7a1313; border-color:#dc2626; color:#fee2e2; }
+
+  .explain{
+    margin:12px 6px 0; color:#ffe8f3;
+    background:linear-gradient(135deg, rgba(156,29,106,.12), rgba(12,42,74,.12));
+    border:1px solid rgba(156,29,106,.45);
+    padding:10px 12px; border-radius:12px; display:none; font-size:.95rem;
+  }
+  .explain.show{ display:block; }
+
+  .controls{ display:flex; justify-content:space-between; gap:10px; margin:16px 4px 0; }
+  .btn{
+    appearance:none; border:none; border-radius:12px; padding:12px 16px; font-weight:800; cursor:pointer;
+    background:linear-gradient(135deg,var(--brand-navy),var(--brand-teal));
+    color:white; box-shadow:0 6px 20px rgba(0,169,180,.25);
+  }
+  .btn.secondary{
+    background:linear-gradient(135deg,var(--brand-magenta),#c23a87);
+    border:1px solid rgba(156,29,106,.55);
+    color:white; box-shadow:0 6px 18px rgba(156,29,106,.25);
+  }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+  .result{ text-align:center; padding:20px 10px 6px; }
+  .score{
+    font-size:2.2rem; font-weight:900; margin:10px 0 2px;
+    background:linear-gradient(90deg,#fff,#cfe9ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .praise{ font-size:1.2rem; font-weight:800; margin:4px 0 14px; color:#fff; }
+  .muted{ color:var(--muted); }
+
+  @media (hover:none){ .option:hover{ transform:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" id="app">
+
+    <!-- Logo-Header -->
+    <div class="school">
+      <img src="Berufsschule5_Logo_final.jpg" alt="Berufsschule 5 – Gesundheits-, Rechts-an class="badge">Quiz</span>
+    </div>
+
+    <div class="header">
+      <div class="counter" id="counter">Frage 1/8</div>
+    </div>
+
+    <div class="timer-row">
+      <div class="timer-dot"></div>
+      <div class="timer"><div class="bar" id="timeBar" style="transform:scaleX(1)"></div></div>
+      <div class="time-left" id="timeLeft">20s</div>
+    </div>
+
+    <h1 class="title" id="question">Laden…</h1>
+
+    <div class="options" id="options"></div>
+
+    <div class="explain" id="explain"></div>
+
+    <div class="controls">
+      <button class="btn secondary" id="restart" style="display:none">Wiederhole das Quiz</button>
+      <button class="btn" id="next" disabled>Weiter</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+(function(){
+  const TOTAL_TIME = 20; // Sekunden pro Frage
+
+  // === FRAGEN: Wirtschaftssubjekte (anspruchsvoll) ===
+  const questions = [
+    {
+      q: "Was beschreibt den Begriff „Wirtschaftssubjekt“ im gegebenen Kontext am genauesten?",
+      options: [
+        "Alle Personen oder Personenmehrheiten, die selbstständig wirtschaftliche Entscheidungen treffen.",
+        "Ausschließlich Unternehmen und der Staat, da nur sie wirtschaftlich relevant sind.",
+        "Nur natürliche Personen, da juristische Personen keine Entscheidungen treffen.",
+        "Nur private Haushalte, da sie Güter konsumieren."
+      ],
+      correct: 0,
+      why: "Wirtschaftssubjekte sind alle Entscheidungsträger, die eigenständig wirtschaftliche Entscheidungen treffen – Einzelpersonen und Zusammenschlüsse."
+    },
+    {
+      q: "Welche Einheit zählt NICHT zu den privaten Haushalten im Sinne des Textes?",
+      options: [
+        "Gewerkschaft",
+        "Kirchengemeinde",
+        "Gemeinnützige Stiftung",
+        "Gesetzliche Krankenversicherung"
+      ],
+      correct: 3,
+      why: "Private Haushalte umfassen auch private Organisationen ohne Erwerbscharakter (z. B. Kirchen, Vereine, Gewerkschaften, Stiftungen). Gesetzliche Sozialversicherungen gehören hingegen zu den öffentlichen Haushalten."
+    },
+    {
+      q: "Welche Entscheidung ist typisch für private Haushalte – nicht für Unternehmen oder den Staat?",
+      options: [
+        "Festlegung des Steuersatzes",
+        "Wahl des Arbeitsplatzes und der Arbeitszeit",
+        "Festlegung von Zöllen",
+        "Standortentscheidung für eine Produktionsstätte"
+      ],
+      correct: 1,
+      why: "Private Haushalte entscheiden u. a. über Arbeitsplatz, Arbeitszeit, Konsum und Sparen. Steuern/Zölle verantwortet der Staat, Standort/Produktion Unternehmen."
+    },
+    {
+      q: "Welche Aussage charakterisiert Unternehmen im Text am präzisesten?",
+      options: [
+        "Sie konsumieren Güter, produzieren aber nicht.",
+        "Sie stellen vorwiegend Waren und Dienstleistungen her und veräußern sie gegen Entgelt.",
+        "Sie erbringen ausschließlich hoheitliche Leistungen für die Allgemeinheit.",
+        "Sie unterscheiden sich nicht von privaten Haushalten."
+      ],
+      correct: 1,
+      why: "Unternehmen sind Produzenten: Herstellung von Gütern/Dienstleistungen und Verkauf gegen Entgelt."
+    },
+    {
+      q: "Welches Beispiel gehört NICHT zum Tertiärsektor (Dienstleistungssektor)?",
+      options: [
+        "Stahlwalzwerk",
+        "Versicherungsmaklerbüro",
+        "Bankfiliale",
+        "Rechenzentrumsbetrieb für einen Online‑Shop"
+      ],
+      correct: 0,
+      why: "Tertiär: Dienstleistungen (z. B. Versicherungen, Banken, Internet). Ein Stahlwalzwerk verarbeitet Sachgüter → Sekundärsektor."
+    },
+    {
+      q: "Warum gilt ein kleiner Primärsektor im Text als Hinweis auf eine bessere wirtschaftliche Lage?",
+      options: [
+        "Weil Rohstoffe meist zu hohen Preisen verkauft werden können.",
+        "Weil die Rohstoffförderung besonders beschäftigungsintensiv ist.",
+        "Weil Rohstoffe häufig nur zu geringen Preisen verkauft werden können und Wertschöpfung vermehrt in Weiterverarbeitung/Dienstleistung liegt.",
+        "Weil es dann keine Importabhängigkeit gibt."
+      ],
+      correct: 2,
+      why: "Der Text begründet: Rohstoffe werden oft nur zu geringen Preisen verkauft; eine Volkswirtschaft mit kleinem Primärsektor erzielt tendenziell mehr Wertschöpfung in Sekundär- und Tertiärsektor."
+    },
+    {
+      q: "Welche Entscheidung ist den öffentlichen Haushalten (Staat) nach dem Text NICHT zugeordnet?",
+      options: [
+        "Erhebung von Gebühren und Beiträgen",
+        "Festlegung von Zöllen und Ein-/Ausfuhrbeschränkungen",
+        "Bereitstellung von Zuschüssen und Transferleistungen",
+        "Bestimmung der Produktionsmenge eines marktwirtschaftlichen Unternehmens"
+      ],
+      correct: 3,
+      why: "Öffentliche Haushalte entscheiden u. a. über Steuern, Gebühren, Beiträge, Zuschüsse, Ausgaben und Transfers; die Produktionsmenge bestimmt das Unternehmen."
+    },
+    {
+      q: "Welche Aussage beschreibt das „Ausland“ im Sinne der Volkswirtschaft des Textes korrekt?",
+      options: [
+        "Es umfasst nur EU‑Mitgliedsstaaten.",
+        "Es umfasst alle Wirtschaftseinheiten außerhalb des betrachteten Wirtschaftsraums, ohne Länderunterscheidung.",
+        "Es umfasst nur Staaten mit Handelsbilanzüberschuss.",
+        "Es umfasst ausschließlich Nicht‑EU‑Länder mit Zollpflicht."
+      ],
+      correct: 1,
+      why: "„Ausland“: alle Einheiten außerhalb des betrachteten Wirtschaftsraumes; es wird nicht nach einzelnen Ländern unterschieden. Entscheidungen: Import, Export, Zölle, Ein-/Ausfuhrbeschränkungen."
+    }
+  ];
+
+  // --- State ---
+  let idx = 0;
+  let score = 0;
+  let answered = false;
+  let timer = null;
+  let timeLeft = TOTAL_TIME;
+
+  // --- Elements ---
+  const elQ = document.getElementById('question');
+  const elOptions = document.getElementById('options');
+  const elExplain = document.getElementById('explain');
+  const elCounter = document.getElementById('counter');
+  const elNext = document.getElementById('next');
+  const elRestart = document.getElementById('restart');
+  const elTimeLeft = document.getElementById('timeLeft');
+  const elTimeBar = document.getElementById('timeBar');
+
+  function start(){
+    idx = 0;
+    score = 0;
+    elNext.style.display = 'inline-block';
+    showQuestion();
+    elRestart.style.display = 'none';
+  }
+
+  function showQuestion(){
+    clearTimer();
+    answered = false;
+    const item = questions[idx];
+    elCounter.textContent = `Frage ${idx+1}/${questions.length}`;
+    elQ.textContent = item.q;
+    elExplain.classList.remove('show');
+    elExplain.textContent = '';
+    elOptions.innerHTML = '';
+    elNext.disabled = true;
+
+    // Render options
+    item.options.forEach((opt, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'option';
+      btn.setAttribute('data-index', i);
+      btn.innerHTML = `
+        <span class="letter">${String.fromCharCode(65+i)}</span>
+        <span class="text">${opt}</span>
+      `;
+      btn.addEventListener('click', ()=> selectAnswer(i));
+      elOptions.appendChild(btn);
+    });
+
+    // Reset timer
+    timeLeft = TOTAL_TIME;
+    updateTimerUI();
+    timer = setInterval(tick, 1000);
+  }
+
+  function tick(){
+    timeLeft--;
+    if (timeLeft < 0){
+      clearTimer();
+      lockAndReveal(null, true); // Zeit abgelaufen -> richtige Antwort markieren, Erklärung
+      return;
+    }
+    updateTimerUI();
+  }
+
+  function updateTimerUI(){
+    elTimeLeft.textContent = `${Math.max(0,timeLeft)}s`;
+    const scale = Math.max(0, timeLeft / TOTAL_TIME);
+    elTimeBar.style.transform = `scaleX(${scale})`;
+    if (timeLeft <= 5){
+      elTimeBar.style.background = 'linear-gradient(90deg,#f43f5e,#fb923c)';
+    } else if (timeLeft <= 10){
+      elTimeBar.style.background = `linear-gradient(90deg,#f59e0b, var(--brand-magenta))`;
+    } else {
+      elTimeBar.style.background = `linear-gradient(90deg,var(--brand-teal),var(--brand-navy))`;
+    }
+  }
+
+  function clearTimer(){
+    if (timer){ clearInterval(timer); timer = null; }
+  }
+
+  function selectAnswer(i){
+    if (answered) return;
+    lockAndReveal(i, false);
+  }
+
+  function lockAndReveal(selectedIndex, timedOut){
+    answered = true;
+    clearTimer();
+
+    const item = questions[idx];
+    const buttons = [...elOptions.querySelectorAll('.option')];
+    buttons.forEach(b => b.disabled = true);
+
+    // Richtige Antwort grün markieren
+    buttons[item.correct].classList.add('correct');
+    if (selectedIndex !== null && selectedIndex !== undefined){
+      if (selectedIndex !== item.correct){
+        buttons[selectedIndex].classList.add('wrong');
+      }
+    }
+
+    const wasCorrect = selectedIndex === item.correct;
+    if (wasCorrect) {
+      score++;
+      elExplain.textContent = "✔️ Richtig!";
+    } else {
+      const prefix = timedOut ? "⏰ Zeit abgelaufen. " : "❌ Falsch. ";
+      elExplain.textContent = prefix + item.why;
+    }
+    elExplain.classList.add('show');
+    elNext.disabled = false;
+  }
+
+  function next(){
+    if (!answered) return;
+    idx++;
+    if (idx >= questions.length){
+      showResult();
+    } else {
+      showQuestion();
+    }
+  }
+
+  function showResult(){
+    clearTimer();
+    const total = questions.length;
+    const praise = getPraise(score, total);
+    const resultHTML = `
+      <div class="result" role="status" aria-live="polite">
+        <div class="praise">${praise}</div>
+        <div class="score">${score} / ${total}</div>
+        <p class="muted">Richtig beantwortet: ${score} von ${total} Fragen.</p>
+      </div>
+    `;
+    elQ.innerHTML = '';
+    elOptions.innerHTML = resultHTML;
+    elExplain.classList.remove('show');
+    elExplain.textContent = '';
+    document.getElementById('counter').textContent = "Quiz beendet";
+    elTimeLeft.textContent = '–';
+    elTimeBar.style.transform = 'scaleX(0)';
+    elNext.disabled = true;
+    elNext.style.display = 'none';
+    elRestart.style.display = 'inline-block';
+  }
+
+  function getPraise(score, total){
+    // Vorgabe:
+    // 7–8: "Klasse"
+    // 5–6: "Gut gemacht! Dran bleiben!"
+    // 1–4 (und 0): "Das müssen Sie nochmals Lernen!"
+    if (score >= 7) return "Klasse";
+    if (score >= 5) return "Gut gemacht! Dran bleiben!";
+    return "Das müssen Sie nochmals Lernen!";
+  }
+
+  // Events
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('restart').addEventListener('click', start);
+
+  // Start
+  start();
+})();
+</script>
+</body>
+</html>
